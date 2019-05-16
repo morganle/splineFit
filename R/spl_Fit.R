@@ -15,13 +15,13 @@
 #' @examples
 #' ## Fitting the spline-based intensity given arrivals from a cyclic sinusoidal
 #' data(Arrs)
-#' data(n_arrs)
-#' m<-length(n_arrs)
+#' data(n_Arrs)
+#' m<-length(n_Arrs)
 #' Tstart<-0
 #' Tend<-24
 #' kn<-50
 #' cyclic=TRUE
-#' spl_Fit(Arrs,m,n_arrs,Tstart,Tend,kn,cyclic,pplot=0)
+#' spl_Fit(Arrs,m,n_Arrs,Tstart,Tend,kn,cyclic,pplot=0)
 
 #' @export
 
