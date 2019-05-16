@@ -156,7 +156,7 @@ spl_Fit <- function(Arrivals,m,n_arrs,Tstart,Tend,kn,cyclic,c_init=NULL,pplot=NU
 
 # solves the TRO subproblem
 # aiming to minimise -m(p)
-Opt_gurobi<-function(B,g,n,Delta,c,cyclic){
+Opt_gurobi<-function(B,g,n,Delta,c,knots,d,Tend,cyclic){
   yip<-0.000000001
 
   ##  B postive-definite
@@ -642,6 +642,96 @@ RIC<-function(lam,c,knots,all_arrs,m,Omeg,Tend,m_i,arrs_unordered,B,B_uo,int_B){
   I<- I_calc(m_i,arrs_unordered,c,knots,lam,m,Omeg,B_uo,int_B)
   J<- -(1/m)*Hess(c,knots,all_arrs,lam,m,Omeg,B)
   return(-2*l_p(c,knots,all_arrs,lam,m,Omeg,Tend) + 2*tr(I%*%solve(J)))
+}
+
+## DESCRIPTION
+
+# Finds the optimal values of the spline coefficients
+# Uses trust region optimisation to fiund optimum
+
+opt_c<-function(c_init,Delta,Delta_max,eta,epsilon,max_it,lam,all_arrs,m,Omeg,knots,B,int_B,d,Tend,cyclic){
+  c_k<-c_init
+  for(k in 1:max_it)
+  {
+    H<- Hess(c_k,knots,all_arrs,lam,m,Omeg,B)
+    g<- Grad(c_k,knots,all_arrs,lam,m,Omeg,B,int_B)
+    p_k<- Opt_gurobi(H,g,length(c_k),Delta,c_k,knots,d,Tend,cyclic)    #takes in the Hessian and gradient of the likelihood
+    l<- l_p(c_k,knots,all_arrs,lam,m,Omeg,Tend)
+    rho_k<- ( -l + l_p(c_k+p_k,knots,all_arrs,lam,m,Omeg,Tend)) / (-l + m_p(c_k,knots,all_arrs,lam,m,Omeg,Tend,g,H,p_k))
+    if(rho_k < 0.25)
+    {
+      Delta<-0.25*Delta
+    }
+    if(rho_k > 0.75 & t(p_k)%*%p_k >= Delta^2-0.001){
+      Delta<- min(2*Delta,Delta_max)
+    }
+    else{
+      Delta<-Delta
+    }
+    if(rho_k > eta){
+      c_k <- c_k + p_k
+    }
+    if(t(p_k)%*%p_k< epsilon^2)
+    {
+      break
+    }
+  }
+  c_opt<-c_k
+  return(c_opt)
+}
+
+## This function takes a NHPP described by a spline and gives back it's gradient at a point
+
+#c - is the vector of spline coefficients at this step
+#all_arrs - the observed arrivals over
+#m - days
+#Omeg - describes the curvature of the B-spline
+#lam - the penalty on the curvature
+
+#the  gradient of the likelihood
+Grad<-function(c,knots,all_arrs,lam,m,Omeg,B,int_B){
+  int<-c()
+  d<-3
+  n<-length(c)
+  f_lin<-f_b(all_arrs,knots,c,d)
+  S_sum<-apply(B/f_lin,2,sum)
+  Grad_p <- S_sum - m*int_B - 0.5*lam*t(c)%*%Omeg
+  return(as.vector(Grad_p))
+}
+
+I_calc<-function(m_i,arrs_unordered,c,knots,lam,m,Omeg,B_uo,int_B){
+  n<-length(c)
+  sum<-matrix(rep(0,n*n),nrow=n)
+  cs<-c(0,cumsum(m_i))
+  for(i in 1:m){
+    arrs<-arrs_unordered[(1+cs[i]):cs[(i+1)]]
+    G<-Grad(c,knots,arrs,lam,1,Omeg/m,B_uo[(1+cs[i]):cs[(i+1)],],int_B)     # finds the gradient of the arrivals from a single day
+    sum<-sum + G%*%t(G)
+  }
+  return((1/m)*sum)
+}
+
+
+##DESCRIPTION
+
+#calculates the Hessian of a NHPP likelihood
+
+Hess<-function(c,knots,all_arrs,lam,m,Omeg,B){
+  d<-3
+  Hess_p<- -0.5*lam*Omeg
+  n<-length(c)
+  f_sq<-f_b(all_arrs,knots,c,d)^2
+  for(i in 1:n){
+    for(k in i:min((i+d),n)){
+      B_ik<-0
+      for(p in 1:length(all_arrs)){
+        B_ik <- B_ik + (B[p,i]*B[p,k])/(f_sq[p])
+      }
+      Hess_p[i,k]<- Hess_p[i,k] - B_ik
+      Hess_p[k,i]<- Hess_p[i,k]
+    }
+  }
+  return(Hess_p)
 }
 
 
