@@ -36,12 +36,12 @@ This function fits a spline function from cardinal B-splines and returns the opt
 }
 \examples{
 ## Fitting the spline-based intensity given arrivals from a cyclic sinusoidal
-Arrivals<-as.vector(t(read.csv("Arrs.csv",header=FALSE)))
-n_arrs<-as.vector(t(read.csv("n_Arrs.csv",header=FALSE)))
+data(Arrs)
+data(n_arrs)
 m<-length(n_arrs)
 Tstart<-0
 Tend<-24
 kn<-50
 cyclic=TRUE
-spl_Fit(Arrivals,m,n_arrs,Tstart,Tend,kn,cyclic,pplot=0)
+spl_Fit(Arrs,m,n_arrs,Tstart,Tend,kn,cyclic,pplot=0)
 }
