@@ -43,5 +43,5 @@ Tstart<-0
 Tend<-24
 kn<-50
 cyclic=TRUE
-spl_Fit(Arrs,m,n_Arrs,Tstart,Tend,kn,cyclic,pplot=0)
+spl_Fit(as.numeric(Arrs),m,as.numeric(n_Arrs),Tstart,Tend,kn,cyclic,pplot=0)
 }
