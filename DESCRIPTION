@@ -1,0 +1,12 @@
+Package: splineFit
+Type: Package
+Title: Fitting and Generating Nonhomogeneous Poisson Process (NHPP) Arrivals.
+Version: 0.1.0
+Date: 07/05/2019
+Author: Dr L. E. Morgan
+Maintainer: Dr L. E. Morgan <l.e.morgan@lancaster.ac.uk>
+Description: 
+    This package can be used to fit and generate NHPP arrivals.
+Depends: gurobi, psych, parallel, pracma, Matrix
+License: Unlimited
+RoxygenNote: 6.1.1
